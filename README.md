@@ -10,8 +10,9 @@ Developed **November - December 2025** (SQL and ER model 24-26 Nov 2025; Django 
 
 ## Team
 
-- Team members: **[team — to confirm]**
-- Orlando Camacho's contribution: **[to confirm]**
+- Team: **Orlando Camacho, Mario Ureña, Ricardo Ponce**.
+- Orlando Camacho: Django backend (together with Mario Ureña), UI design and frontend,
+  chat assistant integration, and the integration of the MySQL database with AWS.
 
 ## What is here
 
