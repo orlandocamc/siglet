@@ -1,0 +1,106 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>SIGLET - Centro de Mando</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <style>
+        .hub-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+        .hub-card {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            border: 1px solid #eee;
+        }
+        .hub-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.15);
+            border-color: #DC1C29;
+        }
+        .hub-icon { font-size: 3rem; margin-bottom: 20px; display: block; }
+        .hub-title { font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; color: #333; }
+        .hub-desc { color: #666; font-size: 0.95rem; line-height: 1.5; }
+    </style>
+</head>
+<body>
+    
+    <header class="topbar">
+        <div class="topbar-title">Sistema de préstamos SIGLET</div>
+        <a href="#" class="topbar-subtitle">Universidad Iberoamericana</a>
+    </header>
+
+    <div class="portal-header">
+        <div class="portal-header-left">
+            <button class="logo-button">Administración</button>
+        </div>
+        <div class="portal-header-center">
+            </div>
+        <div class="portal-header-right">
+            <span class="user-email-display">Admin: {{ usuario_nombre }}</span>
+            <a href="{% url 'logout' %}" class="btn-logout">Salir</a>
+        </div>
+    </div>
+
+    <main class="container">
+        <div style="text-align: center; margin-top: 20px;">
+            <h1 style="color: #333;">Bienvenido al Centro de Mando</h1>
+            <p style="color: #666;">Selecciona el módulo de gestión que deseas utilizar.</p>
+        </div>
+
+        <div class="hub-grid">
+            
+            <a href="/admin/" class="hub-card">
+                <span class="hub-icon">🗄️</span>
+                <div class="hub-title">Gestión de Base de Datos</div>
+                <p class="hub-desc">
+                    Acceso directo a tablas crudas (CRUD).<br>
+                    Crear usuarios, editar inventario, corregir datos manualmente.
+                </p>
+            </a>
+
+            <a href="{% url 'reportes' %}" class="hub-card">
+                <span class="hub-icon">📊</span>
+                <div class="hub-title">Reportes e Inteligencia</div>
+                <p class="hub-desc">
+                    Visualización de métricas clave.<br>
+                    Gráficas de incidentes, uso de laboratorios y estadísticas.
+                </p>
+            </a>
+
+            <a href="{% url 'inventario' %}" class="hub-card">
+                <span class="hub-icon">👁️</span>
+                <div class="hub-title">Vista de Usuario</div>
+                <p class="hub-desc">
+                    Ir al inventario público.<br>
+                    Útil para verificar cómo ven el sistema los alumnos.
+                </p>
+            </a>
+
+            <a href="{% url 'tecnico' %}" class="hub-card">
+                <span class="hub-icon">🛠️</span>
+                <div class="hub-title">Panel de Laboratorista</div>
+                <p class="hub-desc">
+                    Acceso total a operaciones de técnico.<br>
+                    Ver préstamos activos, historial de movimientos y gestionar devoluciones.
+                </p>
+            </a>
+
+        </div>
+    </main>
+
+    <footer class="footer"><p>SIGLET · Panel Administrativo</p></footer>
+</body>
+</html>

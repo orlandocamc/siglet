@@ -1,0 +1,147 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>SIGLET - Mis Préstamos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <style>
+        /* Colores para los estados */
+        .status-active { color: #007bff; font-weight: bold; }
+        .status-returned { color: #28a745; font-weight: bold; }
+        .status-overdue { color: #dc3545; font-weight: bold; }
+    </style>
+</head>
+<body data-page="prestamos">
+    <header class="topbar">
+        <div class="topbar-title">Sistema de préstamos SIGLET</div>
+        <a href="#" class="topbar-subtitle">Universidad Iberoamericana</a>
+    </header>
+
+    <div class="portal-header">
+        
+        <div class="portal-header-left" style="display: flex; align-items: center; gap: 15px;">
+            <button class="logo-button" onclick="window.location.href='{% url 'inventario' %}'">IBERO Préstamos</button>
+
+            <div class="role-switcher" style="display: flex; gap: 5px;">
+                {% if user.is_staff %}
+                <a href="{% url 'admin_hub' %}" class="logo-button" style="text-decoration: none; font-size: 0.75rem; background: #000; color: #fff; padding: 5px 8px; border-radius: 4px;">
+                    ⚙️ Admin
+                </a>
+                {% endif %}
+                {% if es_alumno %}
+                <a href="{% url 'inventario' %}" class="logo-button" style="text-decoration: none; font-size: 0.75rem; background: #333; color: white; padding: 5px 8px; border-radius: 4px;">
+                    👨‍🎓 Alumno
+                </a>
+                {% endif %}
+                {% if es_profesor %}
+                <a href="{% url 'reservas' %}" class="logo-button" style="text-decoration: none; font-size: 0.75rem; background: #DC1C29; color: white; padding: 5px 8px; border-radius: 4px;">
+                    👨‍🏫 Profe
+                </a>
+                {% endif %}
+                {% if es_tecnico %}
+                <a href="{% url 'tecnico' %}" class="logo-button" style="text-decoration: none; font-size: 0.75rem; background: #28a745; color: white; padding: 5px 8px; border-radius: 4px;">
+                    🛠️ Técnico
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="portal-header-center" style="display: flex; align-items: center; gap: 15px;">
+            
+            {% if es_profesor %}
+            <a href="{% url 'reservas' %}" class="portal-tab" style="text-decoration: none; color: #DC1C29; font-weight: bold; border-bottom: 2px solid transparent;">
+                📅 Reservar Lab
+            </a>
+            {% endif %}
+
+            <a href="{% url 'inventario' %}" class="portal-tab" style="text-decoration: none;">Inventario</a>
+            <a href="{% url 'mis_prestamos' %}" class="portal-tab" style="text-decoration: none;">Mis Préstamos</a>
+            
+            <a href="https://serviciosenlinea.ibero.mx/" target="_blank" 
+                style="color: #007bff; font-weight: bold; text-decoration: none; font-size: 0.85rem;">Servicios</a>
+            <a href="https://ibero.brightspace.com/d2l/home" target="_blank" 
+                style="color: #FFA500; font-weight: bold; text-decoration: none; font-size: 0.85rem;">Brightspace</a>
+
+            <form method="GET" action="{% url 'inventario' %}" class="portal-search" style="margin-left: 15px; display: flex; align-items: center;">
+                <input type="text" name="q" id="portal-search-input" placeholder="Buscar..." style="padding: 5px; width: 120px; border-radius: 4px; border: 1px solid #ccc;"/>
+                <button type="submit" class="portal-icon-btn" style="background: none; border: none; cursor: pointer; padding: 5px;">🔍</button>
+            </form>
+
+            <div class="portal-cart" style="margin-left: 5px;">
+                <button class="portal-icon-btn" onclick="window.location.href='{% url 'ver_carrito' %}'">🛒</button>
+                <span class="portal-cart-count">{{ carrito_count }}</span>
+            </div>
+        </div>
+        
+        <div class="portal-header-right">
+            <span class="user-email-display" style="font-size: 0.9rem;">{{ usuario_nombre }}</span>
+            <a href="{% url 'logout' %}" class="btn-logout" style="text-decoration: none; font-size: 0.8rem;">Salir</a>
+        </div>
+    </div>
+    
+    <main class="container">
+        
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}" style="padding: 15px; background: #d4edda; color: #155724; margin-bottom: 20px; border-radius: 5px;">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <section class="card">
+            <h2>Historial de Préstamos</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Equipo</th>
+                            <th>Serie</th>
+                            <th>Fecha Solicitud</th>
+                            <th>Fecha Límite</th>
+                            <th>Estado</th>
+                            <th>Notas</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in prestamos %}
+                        <tr>
+                            <td>{{ p.equipo }}</td>
+                            <td>{{ p.serie }}</td>
+                            <td>{{ p.fecha_solicitud|date:"d/m/Y H:i" }}</td>
+                            <td>{{ p.fecha_entrega|date:"d/m/Y H:i" }}</td>
+                            <td>
+                                <span class="status-{{ p.estado }}">
+                                    {% if p.estado == 'active' %}Activo
+                                    {% elif p.estado == 'returned' %}Devuelto
+                                    {% elif p.estado == 'overdue' %}Vencido
+                                    {% else %}{{ p.estado }}{% endif %}
+                                </span>
+                            </td>
+                            <td>{{ p.comentarios }}</td>
+                            <td>
+                                {% if p.estado == 'active' %}
+                                    <a href="{% url 'reportar_incidente' p.id %}" class="btn-login" style="background-color: #dc3545; color: white; padding: 5px 10px; font-size: 0.8rem; text-decoration: none; border-radius: 4px;">
+                                        ⚠️ Reportar Falla
+                                    </a>
+                                {% else %}
+                                    <span style="color: #aaa;">--</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" style="text-align: center;">No tienes préstamos registrados.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+    <footer class="footer"><p>SIGLET</p></footer>
+</body>
+</html>

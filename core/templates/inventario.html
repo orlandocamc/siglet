@@ -1,0 +1,269 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>SIGLET - Inventario</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <style>
+        .material-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            background: white;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .material-card h3 { font-size: 1.1rem; margin-bottom: 10px; color: #333; }
+        .material-card p { font-size: 0.9rem; color: #666; }
+        .badge-status { padding: 4px 8px; border-radius: 12px; font-size: 0.8rem; }
+        .status-disponible { background: #d4edda; color: #155724; }
+        .status-ocupado { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body data-page="inventario">
+    <header class="topbar">
+        <div class="topbar-title">Sistema de préstamos SIGLET</div>
+        <a href="#" class="topbar-subtitle">Universidad Iberoamericana</a>
+    </header>
+
+    <div class="portal-header">
+        
+        <div class="portal-header-left" style="display: flex; align-items: center; gap: 15px;">
+            <button class="logo-button" onclick="window.location.href='{% url 'inventario' %}'">IBERO Préstamos</button>
+
+            <div class="role-switcher" style="display: flex; gap: 5px;">
+                {% if user.is_staff %}
+                <a href="{% url 'admin_hub' %}" class="logo-button" style="text-decoration: none; font-size: 0.75rem; background: #000; color: #fff; padding: 5px 8px; border-radius: 4px;">
+                    ⚙️ Admin
+                </a>
+                {% endif %}
+                {% if es_alumno %}
+                <a href="{% url 'inventario' %}" class="logo-button" style="text-decoration: none; font-size: 0.75rem; background: #333; color: white; padding: 5px 8px; border-radius: 4px;">
+                    👨‍🎓 Alumno
+                </a>
+                {% endif %}
+                {% if es_profesor %}
+                <a href="{% url 'reservas' %}" class="logo-button" style="text-decoration: none; font-size: 0.75rem; background: #DC1C29; color: white; padding: 5px 8px; border-radius: 4px;">
+                    👨‍🏫 Profe
+                </a>
+                {% endif %}
+                {% if es_tecnico %}
+                <a href="{% url 'tecnico' %}" class="logo-button" style="text-decoration: none; font-size: 0.75rem; background: #28a745; color: white; padding: 5px 8px; border-radius: 4px;">
+                    🛠️ Técnico
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="portal-header-center" style="display: flex; align-items: center; gap: 15px;">
+            
+            {% if es_profesor %}
+            <a href="{% url 'reservas' %}" class="portal-tab" style="text-decoration: none; color: #DC1C29; font-weight: bold; border-bottom: 2px solid transparent;">
+                📅 Reservar Lab
+            </a>
+            {% endif %}
+
+            <a href="{% url 'inventario' %}" class="portal-tab" style="text-decoration: none;">Inventario</a>
+            <a href="{% url 'mis_prestamos' %}" class="portal-tab" style="text-decoration: none;">Mis Préstamos</a>
+            
+            <a href="https://serviciosenlinea.ibero.mx/" target="_blank" 
+                style="color: #007bff; font-weight: bold; text-decoration: none; font-size: 0.85rem;">Servicios</a>
+            <a href="https://ibero.brightspace.com/d2l/home" target="_blank" 
+                style="color: #FFA500; font-weight: bold; text-decoration: none; font-size: 0.85rem;">Brightspace</a>
+
+            <form method="GET" action="{% url 'inventario' %}" class="portal-search" style="margin-left: 15px; display: flex; align-items: center;">
+                <input type="text" name="q" id="portal-search-input" placeholder="Buscar..." style="padding: 5px; width: 120px; border-radius: 4px; border: 1px solid #ccc;"/>
+                <button type="submit" class="portal-icon-btn" style="background: none; border: none; cursor: pointer; padding: 5px;">🔍</button>
+            </form>
+
+            <div class="portal-cart" style="margin-left: 5px;">
+                <button class="portal-icon-btn" onclick="window.location.href='{% url 'ver_carrito' %}'">🛒</button>
+                <span class="portal-cart-count">{{ carrito_count }}</span>
+            </div>
+        </div>
+        
+        <div class="portal-header-right">
+            <span class="user-email-display" style="font-size: 0.9rem;">{{ usuario_nombre }}</span>
+            <a href="{% url 'logout' %}" class="btn-logout" style="text-decoration: none; font-size: 0.8rem;">Salir</a>
+        </div>
+    </div>
+
+    <main class="container">
+        <section class="card card-labs" style="padding: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                <h2 style="margin: 0;">Laboratorios</h2>
+                
+                <form method="GET" style="display: flex; align-items: center; gap: 10px;">
+                    {% if request.GET.q %}
+                        <input type="hidden" name="q" value="{{ request.GET.q }}">
+                    {% endif %}
+                    
+                    <label for="lab_id" style="font-weight: bold; color: #555;">Filtrar por:</label>
+                    <select name="lab_id" id="lab_select" onchange="this.form.submit()" 
+                            style="padding: 8px; border-radius: 4px; border: 1px solid #ccc; width: 300px; cursor: pointer;">
+                        <option value="">Todos los Laboratorios</option>
+                        {% for lab in labs %}
+                            <option value="{{ lab.id }}" {% if lab_seleccionado == lab.id %}selected{% endif %}>
+                                {{ lab.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </div>
+        </section>
+
+        <section id="seccion-inventario" class="card">
+            <h2>Inventario de materiales</h2>
+            <p class="description">
+                Selecciona los materiales disponibles y añádelos a tu solicitud.
+            </p>
+
+            <div id="inventario-cards" class="inventario-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; padding: 20px 0;">
+                
+                {% for equipo in equipos %}
+                <div class="material-card">
+                    <h3>{{ equipo.equipment_type.name }}</h3>
+                    <p><strong>Serie:</strong> {{ equipo.serial_number }}</p>
+                    <p><strong>Lab:</strong> {{ equipo.lab.name }}</p>
+                    
+                    <div style="margin: 10px 0;">
+                        {% if equipo.equipment_status.id == 1 %}
+                            <span class="badge-status status-disponible" style="background-color: #d4edda; color: #155724; padding: 5px 10px; border-radius: 15px; font-size: 0.8rem;">
+                                Disponible
+                            </span>
+                        {% else %}
+                            <span class="badge-status status-ocupado" style="background-color: #f8d7da; color: #721c24; padding: 5px 10px; border-radius: 15px; font-size: 0.8rem;">
+                                {{ equipo.equipment_status.name|title }}
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    {% if equipo.equipment_status.id == 1 %}
+                        <form action="{% url 'agregar_al_carrito' %}" method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="equipo_id" value="{{ equipo.id }}">
+                            <button type="submit" class="btn-login" style="width: 100%; padding: 5px; font-size: 0.9rem; cursor: pointer;">
+                                Agregar al carrito
+                            </button>
+                        </form>
+                    {% else %}
+                        <button disabled style="width: 100%; padding: 5px; font-size: 0.9rem; background-color: #ccc; color: #666; border: none; cursor: not-allowed; border-radius: 4px;">
+                            No Disponible
+                        </button>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <div style="grid-column: 1/-1; text-align: center; padding: 20px;">
+                    <p>No hay equipos registrados que coincidan con la búsqueda.</p>
+                    <small>Entra al Panel de Admin para agregar equipos.</small>
+                </div>
+                {% endfor %}
+
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>SIGLET · Sistema Integral de Gestión de Laboratorios y Equipos Tecnológicos</p>
+    </footer>
+
+    <div id="chat-widget" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; font-family: sans-serif;">
+    
+    <button onclick="toggleChat()" style="background: #DC1C29; color: white; border: none; width: 60px; height: 60px; border-radius: 50%; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer; font-size: 30px;">
+        🤖
+    </button>
+
+    <div id="chat-window" style="display: none; position: absolute; bottom: 80px; right: 0; width: 350px; height: 450px; background: white; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.2); flex-direction: column; overflow: hidden; border: 1px solid #ddd;">
+        
+        <div style="background: #DC1C29; color: white; padding: 15px; font-weight: bold; display: flex; justify-content: space-between;">
+            <span>Asistente SIGLET 🤖</span>
+            <span onclick="toggleChat()" style="cursor: pointer;">✖</span>
+        </div>
+
+        <div id="chat-messages" style="flex-grow: 1; padding: 15px; overflow-y: auto; background: #f9f9f9; display: flex; flex-direction: column; gap: 10px;">
+            <div style="align-self: flex-start; background: #e9ecef; padding: 10px; border-radius: 10px; max-width: 80%;">
+                ¡Hola Ingeniero! Soy Siggy. ¿En qué puedo ayudarte hoy?
+            </div>
+        </div>
+
+        <div style="padding: 10px; border-top: 1px solid #eee; display: flex; gap: 5px;">
+            <input type="text" id="chat-input" placeholder="Escribe tu duda..." style="flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px; outline: none;">
+            <button onclick="enviarMensaje()" style="background: #333; color: white; border: none; padding: 0 15px; border-radius: 5px; cursor: pointer;">➤</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleChat() {
+        const chat = document.getElementById('chat-window');
+        chat.style.display = chat.style.display === 'none' ? 'flex' : 'none';
+    }
+
+    async function enviarMensaje() {
+        const input = document.getElementById('chat-input');
+        const texto = input.value.trim();
+        if (!texto) return;
+
+        // 1. Mostrar mensaje usuario
+        agregarBurbuja(texto, 'user');
+        input.value = '';
+        
+        // 2. Mostrar "Escribiendo..."
+        const loadingId = agregarBurbuja('Analizando base de datos...', 'bot');
+
+        try {
+            // 3. Enviar a Django
+            const response = await fetch('/api/chat/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ mensaje: texto })
+            });
+            
+            const data = await response.json();
+            
+            // 4. Reemplazar loading con respuesta
+            document.getElementById(loadingId).remove();
+            agregarBurbuja(data.respuesta, 'bot');
+
+        } catch (error) {
+            document.getElementById(loadingId).innerText = "Error de comunicación.";
+        }
+    }
+
+    function agregarBurbuja(texto, tipo) {
+        const div = document.createElement('div');
+        div.id = 'msg-' + Date.now();
+        div.style.padding = '10px';
+        div.style.borderRadius = '10px';
+        div.style.maxWidth = '80%';
+        div.style.fontSize = '0.9rem';
+        
+        if (tipo === 'user') {
+            div.style.alignSelf = 'flex-end';
+            div.style.background = '#DC1C29'; // Rojo Ibero
+            div.style.color = 'white';
+        } else {
+            div.style.alignSelf = 'flex-start';
+            div.style.background = '#e9ecef';
+            div.style.color = '#333';
+        }
+        
+        div.innerText = texto;
+        document.getElementById('chat-messages').appendChild(div);
+        document.getElementById('chat-messages').scrollTop = 99999; // Auto-scroll
+        return div.id;
+    }
+    
+    // Enviar con Enter
+    document.getElementById('chat-input').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') enviarMensaje();
+    });
+</script>
+
+</body>
+</html>

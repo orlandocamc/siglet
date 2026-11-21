@@ -1,0 +1,212 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>SIGLET - Mi Solicitud</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <style>
+        /* Estilos del Modal */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); }
+        .modal-content { background-color: #fefefe; margin: 15% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 500px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+        .modal-header { font-size: 1.2rem; font-weight: bold; margin-bottom: 15px; color: #DC1C29; }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+        .btn-cancel { background: #ccc; color: #333; border: none; padding: 10px 20px; cursor: pointer; border-radius: 4px; }
+        .btn-confirm { background: #DC1C29; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 4px; font-weight: bold; }
+    </style>
+</head>
+<body data-page="solicitud">
+    
+    <header class="topbar">
+        <div class="topbar-title">
+            Sistema de préstamos SIGLET
+        </div>
+        <a href="#" class="topbar-subtitle">
+            Universidad Iberoamericana
+        </a>
+    </header>
+
+    <div class="portal-header">
+        
+        <div class="portal-header-left" style="display: flex; align-items: center; gap: 15px;">
+            <button class="logo-button" onclick="window.location.href='{% url 'inventario' %}'">IBERO Préstamos</button>
+
+            <div class="role-switcher" style="display: flex; gap: 5px;">
+                {% if user.is_staff %}
+                <a href="{% url 'admin_hub' %}" class="logo-button" style="text-decoration: none; font-size: 0.75rem; background: #000; color: #fff; padding: 5px 8px; border-radius: 4px;">
+                    ⚙️ Admin
+                </a>
+                {% endif %}
+                {% if es_alumno %}
+                <a href="{% url 'inventario' %}" class="logo-button" style="text-decoration: none; font-size: 0.75rem; background: #333; color: white; padding: 5px 8px; border-radius: 4px;">
+                    👨‍🎓 Alumno
+                </a>
+                {% endif %}
+                {% if es_profesor %}
+                <a href="{% url 'reservas' %}" class="logo-button" style="text-decoration: none; font-size: 0.75rem; background: #DC1C29; color: white; padding: 5px 8px; border-radius: 4px;">
+                    👨‍🏫 Profe
+                </a>
+                {% endif %}
+                {% if es_tecnico %}
+                <a href="{% url 'tecnico' %}" class="logo-button" style="text-decoration: none; font-size: 0.75rem; background: #28a745; color: white; padding: 5px 8px; border-radius: 4px;">
+                    🛠️ Técnico
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="portal-header-center" style="display: flex; align-items: center; gap: 15px;">
+            
+            {% if es_profesor %}
+            <a href="{% url 'reservas' %}" class="portal-tab" style="text-decoration: none; color: #DC1C29; font-weight: bold; border-bottom: 2px solid transparent;">
+                📅 Reservar Lab
+            </a>
+            {% endif %}
+
+            <a href="{% url 'inventario' %}" class="portal-tab" style="text-decoration: none;">Inventario</a>
+            <a href="{% url 'mis_prestamos' %}" class="portal-tab" style="text-decoration: none;">Mis Préstamos</a>
+            
+            <a href="https://serviciosenlinea.ibero.mx/" target="_blank" 
+                style="color: #007bff; font-weight: bold; text-decoration: none; font-size: 0.85rem;">Servicios</a>
+            <a href="https://ibero.brightspace.com/d2l/home" target="_blank" 
+                style="color: #FFA500; font-weight: bold; text-decoration: none; font-size: 0.85rem;">Brightspace</a>
+
+            <form method="GET" action="{% url 'inventario' %}" class="portal-search" style="margin-left: 15px; display: flex; align-items: center;">
+                <input type="text" name="q" id="portal-search-input" placeholder="Buscar..." style="padding: 5px; width: 120px; border-radius: 4px; border: 1px solid #ccc;"/>
+                <button type="submit" class="portal-icon-btn" style="background: none; border: none; cursor: pointer; padding: 5px;">🔍</button>
+            </form>
+
+            <div class="portal-cart" style="margin-left: 5px;">
+                <button class="portal-icon-btn" onclick="window.location.href='{% url 'ver_carrito' %}'">🛒</button>
+                <span class="portal-cart-count">{{ carrito_count }}</span>
+            </div>
+        </div>
+        
+        <div class="portal-header-right">
+            <span class="user-email-display" style="font-size: 0.9rem;">{{ usuario_nombre }}</span>
+            <a href="{% url 'logout' %}" class="btn-logout" style="text-decoration: none; font-size: 0.8rem;">Salir</a>
+        </div>
+    </div>
+
+    <main class="container">
+        <section class="card">
+            <h2>Confirmar Solicitud de Material</h2>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}" style="padding: 10px; margin-bottom: 10px; background: #d4edda; color: #155724; border-radius: 5px;">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Equipo</th>
+                            <th>Serie</th>
+                            <th>Laboratorio</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items_carrito %}
+                        <tr>
+                            <td>{{ item.equipment_type.name }}</td>
+                            <td>{{ item.serial_number }}</td>
+                            <td>{{ item.lab.name }}</td>
+                            <td>
+                                <form action="{% url 'quitar_del_carrito' %}" method="POST">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="equipo_id" value="{{ item.id }}">
+                                    <button type="submit" style="background: none; border: none; color: red; cursor: pointer;">🗑️ Quitar</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" style="text-align: center;">Tu carrito está vacío.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if items_carrito %}
+            <div class="form-actions solicitud-actions">
+                <form action="{% url 'confirmar_solicitud' %}" method="POST" id="form-solicitud">
+                    {% csrf_token %}
+                    <label style="font-weight: bold;">Fecha de Entrega Estimada (Obligatorio):</label>
+                    <input type="datetime-local" name="fecha_entrega" id="fecha_entrega" required style="margin-bottom: 10px; padding: 8px; width: 100%;">
+                    <br>
+                    
+                    <p style="font-size: 0.9rem; color: #555; background: #fff3cd; padding: 10px; border-radius: 4px;">
+                        ℹ️ Recuerda que eres responsable de entregar el equipo antes de la fecha límite.
+                    </p>
+
+                    <button type="button" onclick="validarYMostrarModal()" class="btn-solicitar">
+                        Solicitar Préstamo
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+        </section>
+    </main>
+
+    <footer class="footer"><p>SIGLET · Sistema Integral de Gestión de Laboratorios</p></footer>
+
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">⚠️ Confirmación de Responsabilidad</div>
+            <div class="modal-body">
+                <p>Estás solicitando <strong>{{ items_carrito|length }}</strong> equipos.</p>
+                <p>Te comprometes a devolverlos antes de:</p>
+                <h3 id="modal-fecha" style="text-align: center; color: #333;"></h3>
+                <p style="font-size: 0.85rem; color: #666;">
+                    Al confirmar, aceptas que el retraso o daño generará una incidencia en tu historial académico.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
+                <button class="btn-confirm" onclick="enviarFormulario()">Acepto y Solicito</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            const fechaMinima = now.toISOString().slice(0,16);
+
+            const inputFecha = document.getElementById('fecha_entrega');
+            if (inputFecha) {
+                inputFecha.min = fechaMinima;
+                inputFecha.addEventListener('change', function(e) {
+                    if (e.target.value < fechaMinima) {
+                        alert("⚠️ La fecha de entrega debe ser futura.");
+                        e.target.value = "";
+                    }
+                });
+            }
+        });
+
+        function validarYMostrarModal() {
+            const fechaInput = document.getElementById('fecha_entrega').value;
+            if (!fechaInput) {
+                alert("Debes seleccionar una fecha de entrega.");
+                return;
+            }
+            document.getElementById('modal-fecha').innerText = fechaInput.replace('T', ' a las ');
+            document.getElementById('confirmModal').style.display = "block";
+        }
+        function cerrarModal() {
+            document.getElementById('confirmModal').style.display = "none";
+        }
+        function enviarFormulario() {
+            document.getElementById('form-solicitud').submit();
+        }
+    </script>
+</body>
+</html>

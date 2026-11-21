@@ -1,0 +1,283 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>SIGLET - Reservas</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <style>
+        /* Estilos del Modal de Confirmación */
+        .modal {
+            display: none; position: fixed; z-index: 1000; left: 0; top: 0;
+            width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: #fefefe; margin: 15% auto; padding: 20px;
+            border: 1px solid #888; width: 80%; max-width: 500px;
+            border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .modal-header { font-size: 1.2rem; font-weight: bold; margin-bottom: 15px; color: #DC1C29; }
+        .modal-body p { margin: 10px 0; font-size: 1rem; }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+        .btn-cancel { background: #ccc; color: #333; border: none; padding: 10px 20px; cursor: pointer; border-radius: 4px; }
+        .btn-confirm { background: #DC1C29; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 4px; font-weight: bold; }
+    </style>
+</head>
+<body data-page="reservas">
+    <header class="topbar">
+        <div class="topbar-title">Sistema de préstamos SIGLET</div>
+        <a href="#" class="topbar-subtitle">Universidad Iberoamericana</a>
+    </header>
+
+   <div class="portal-header">
+        
+        <div class="portal-header-left" style="display: flex; align-items: center; gap: 15px;">
+            <button class="logo-button" onclick="window.location.href='{% url 'inventario' %}'">IBERO Préstamos</button>
+
+            <div class="role-switcher" style="display: flex; gap: 5px;">
+                {% if user.is_staff %}
+                <a href="{% url 'admin_hub' %}" class="logo-button" style="text-decoration: none; font-size: 0.75rem; background: #000; color: #fff; padding: 5px 8px; border-radius: 4px;">
+                    ⚙️ Admin
+                </a>
+                {% endif %}
+                {% if es_alumno %}
+                <a href="{% url 'inventario' %}" class="logo-button" style="text-decoration: none; font-size: 0.75rem; background: #333; color: white; padding: 5px 8px; border-radius: 4px;">
+                    👨‍🎓 Alumno
+                </a>
+                {% endif %}
+                {% if es_profesor %}
+                <a href="{% url 'reservas' %}" class="logo-button" style="text-decoration: none; font-size: 0.75rem; background: #DC1C29; color: white; padding: 5px 8px; border-radius: 4px;">
+                    👨‍🏫 Profe
+                </a>
+                {% endif %}
+                {% if es_tecnico %}
+                <a href="{% url 'tecnico' %}" class="logo-button" style="text-decoration: none; font-size: 0.75rem; background: #28a745; color: white; padding: 5px 8px; border-radius: 4px;">
+                    🛠️ Técnico
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="portal-header-center" style="display: flex; align-items: center; gap: 15px;">
+            
+            {% if es_profesor %}
+            <a href="{% url 'reservas' %}" class="portal-tab" style="text-decoration: none; color: #DC1C29; font-weight: bold; border-bottom: 2px solid transparent;">
+                📅 Reservar Lab
+            </a>
+            {% endif %}
+
+            <a href="{% url 'inventario' %}" class="portal-tab" style="text-decoration: none;">Inventario</a>
+            <a href="{% url 'mis_prestamos' %}" class="portal-tab" style="text-decoration: none;">Mis Préstamos</a>
+            
+            <a href="https://serviciosenlinea.ibero.mx/" target="_blank" 
+                style="color: #007bff; font-weight: bold; text-decoration: none; font-size: 0.85rem;">Servicios</a>
+            <a href="https://ibero.brightspace.com/d2l/home" target="_blank" 
+                style="color: #FFA500; font-weight: bold; text-decoration: none; font-size: 0.85rem;">Brightspace</a>
+
+            <form method="GET" action="{% url 'inventario' %}" class="portal-search" style="margin-left: 15px; display: flex; align-items: center;">
+                <input type="text" name="q" id="portal-search-input" placeholder="Buscar..." style="padding: 5px; width: 120px; border-radius: 4px; border: 1px solid #ccc;"/>
+                <button type="submit" class="portal-icon-btn" style="background: none; border: none; cursor: pointer; padding: 5px;">🔍</button>
+            </form>
+
+            <div class="portal-cart" style="margin-left: 5px;">
+                <button class="portal-icon-btn" onclick="window.location.href='{% url 'ver_carrito' %}'">🛒</button>
+                <span class="portal-cart-count">{{ carrito_count }}</span>
+            </div>
+        </div>
+        
+        <div class="portal-header-right">
+            <span class="user-email-display" style="font-size: 0.9rem;">{{ usuario_nombre }}</span>
+            <a href="{% url 'logout' %}" class="btn-logout" style="text-decoration: none; font-size: 0.8rem;">Salir</a>
+        </div>
+    </div>
+
+    <main class="container">
+        
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}" style="padding: 15px; background: #d4edda; color: #155724; margin-bottom: 20px; border-radius: 5px;">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <section class="card" style="margin-bottom: 30px;">
+            <h2>Nueva Reserva de Espacio</h2>
+            <form method="POST" id="form-reserva" class="login-form" style="max-width: 100%;">
+                {% csrf_token %}
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="form-row">
+                        <label>Laboratorio:</label>
+                        <select name="lab_id" id="lab_id" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                            {% for lab in labs %}
+                                <option value="{{ lab.id }}">{{ lab.name }} (Cap: {{ lab.capacity }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <label>Motivo:</label>
+                        <select name="reason_id" id="reason_id" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                            {% for razon in razones %}
+                                <option value="{{ razon.id }}">{{ razon.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <label>Inicio:</label>
+                        <input type="datetime-local" name="start_time" id="start_time" required style="width: 100%;">
+                    </div>
+
+                    <div class="form-row">
+                        <label>Fin:</label>
+                        <input type="datetime-local" name="end_time" id="end_time" required style="width: 100%;">
+                    </div>
+                </div>
+
+                <div class="form-row" style="margin-top: 15px;">
+                    <label>Comentarios adicionales:</label>
+                    <input type="text" name="comment" id="comment" placeholder="Ej. Clase de Mecatrónica Avanzada" style="width: 100%;">
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" onclick="validarYMostrarModal()" class="btn-solicitar">Crear Reserva</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="card">
+            <h2>Mis Reservas</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Laboratorio</th>
+                            <th>Inicio</th>
+                            <th>Fin</th>
+                            <th>Estado</th>
+                            <th>Comentario</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in reservas %}
+                        <tr>
+                            <td>{{ r.lab }}</td>
+                            <td>{{ r.inicio|date:"d/m/Y H:i" }}</td>
+                            <td>{{ r.fin|date:"d/m/Y H:i" }}</td>
+                            <td>
+                                <span style="font-weight: bold; color: {% if r.estado == 'approved' %}green{% elif r.estado == 'pending' %}orange{% else %}red{% endif %};">
+                                    {{ r.estado|upper }}
+                                </span>
+                            </td>
+                            <td>{{ r.comentario }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="5" style="text-align: center;">No tienes reservas registradas.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>SIGLET · Sistema Integral de Gestión de Laboratorios</p>
+    </footer>
+
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">⚠️ Confirmación de Responsabilidad</div>
+            <div class="modal-body">
+                <p>Por favor verifica los datos de tu reserva:</p>
+                <ul style="background: #f9f9f9; padding: 15px; border-radius: 5px;">
+                    <li><strong>Laboratorio:</strong> <span id="modal-lab"></span></li>
+                    <li><strong>Inicio:</strong> <span id="modal-inicio"></span></li>
+                    <li><strong>Fin:</strong> <span id="modal-fin"></span></li>
+                </ul>
+                <p style="font-size: 0.9rem; color: #666;">
+                    Al hacer clic en "Confirmar", aceptas la responsabilidad del uso del espacio en el horario seleccionado.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="cerrarModal()">Corregir</button>
+                <button class="btn-confirm" onclick="enviarFormulario()">Confirmar y Reservar</button>
+            </div>
+        </div>
+    </div>
+
+   <script>
+        // ============================================================
+        // 1. INICIALIZACIÓN: BLOQUEO DE FECHAS PASADAS (Al cargar)
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', function() {
+            // Obtenemos fecha/hora actual ajustada a la zona horaria local
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            const fechaMinima = now.toISOString().slice(0,16); // Formato YYYY-MM-DDTHH:MM
+            
+            // Referencias a los inputs
+            const inputInicio = document.getElementById('start_time');
+            const inputFin = document.getElementById('end_time');
+
+            // Aplicamos el atributo 'min' para deshabilitar días pasados en el calendario
+            if (inputInicio) inputInicio.min = fechaMinima;
+            if (inputFin) inputFin.min = fechaMinima;
+
+            // Validación en tiempo real (Por si escriben manual)
+            function validarFechaReal(e) {
+                if (e.target.value && e.target.value < fechaMinima) {
+                    alert("⚠️ Error: No se permiten reservas en el pasado. Por favor selecciona una fecha y hora futura.");
+                    e.target.value = ""; // Borramos el dato inválido
+                }
+            }
+
+            if (inputInicio) inputInicio.addEventListener('change', validarFechaReal);
+            if (inputFin) inputFin.addEventListener('change', validarFechaReal);
+        });
+
+        // ============================================================
+        // 2. LÓGICA DEL MODAL DE CONFIRMACIÓN (Al hacer click)
+        // ============================================================
+        function validarYMostrarModal() {
+            // A. Obtener referencias
+            const labSelect = document.getElementById('lab_id');
+            const inicioInput = document.getElementById('start_time').value;
+            const finInput = document.getElementById('end_time').value;
+
+            // B. Validar que no estén vacíos
+            if (!inicioInput || !finInput) {
+                alert("Por favor completa las fechas de inicio y fin antes de continuar.");
+                return;
+            }
+
+            // C. Validar lógica de tiempo (Inicio debe ser antes que Fin)
+            if (inicioInput >= finInput) {
+                alert("⚠️ Error de Lógica: La fecha de fin debe ser posterior a la fecha de inicio.");
+                return;
+            }
+
+            // D. Llenar el modal con los datos visuales
+            // .text obtiene el nombre del laboratorio, no el ID
+            document.getElementById('modal-lab').innerText = labSelect.options[labSelect.selectedIndex].text;
+            document.getElementById('modal-inicio').innerText = inicioInput.replace('T', ' a las ');
+            document.getElementById('modal-fin').innerText = finInput.replace('T', ' a las ');
+
+            // E. Mostrar modal
+            document.getElementById('confirmModal').style.display = "block";
+        }
+
+        function cerrarModal() {
+            document.getElementById('confirmModal').style.display = "none";
+        }
+
+        function enviarFormulario() {
+            // Envío final al servidor
+            document.getElementById('form-reserva').submit();
+        }
+    </script>
+        
+</body>
+</html>

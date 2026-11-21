@@ -1,0 +1,1 @@
+web: gunicorn siglet_web.wsgi --log-file -

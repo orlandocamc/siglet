@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>SIGLET - Configuración</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body data-page="config">
+    <!-- Barra roja + header portal -->
+    <header class="topbar">
+        <div class="topbar-title">
+            Sistema de préstamos de Laboratorios SIGLET
+        </div>
+        <a href="#" class="topbar-subtitle">
+            Universidad Iberoamericana
+        </a>
+    </header>
+
+    <div class="portal-header">
+        <div class="portal-header-left">
+            <button class="logo-button" id="btn-home">IBERO Préstamos</button>
+        </div>
+        <div class="portal-header-center">
+            <button class="portal-tab" data-target="inventario.html" data-tab="">
+                Inventario
+            </button>
+            <button class="portal-tab" data-target="prestamos.html" data-tab="activos">
+                Activos
+            </button>
+            <button class="portal-tab" data-target="prestamos.html" data-tab="vencidos">
+                Vencidos
+            </button>
+            <button class="portal-tab" data-target="prestamos.html" data-tab="previos">
+                Previos
+            </button>
+            <button class="portal-tab" data-target="prestamos.html" data-tab="adeudos">
+                Adeudos
+            </button>
+
+            <div class="portal-search">
+                <input type="text" id="portal-search-input" placeholder="Buscar..." disabled />
+                <button class="portal-icon-btn" id="portal-search-btn" disabled>🔍</button>
+            </div>
+
+            <div class="portal-cart">
+                <button class="portal-icon-btn" id="portal-cart-btn">🛒</button>
+                <span id="portal-cart-count" class="portal-cart-count">0</span>
+            </div>
+        </div>
+        <div class="portal-header-right">
+            <span id="user-email-display" class="user-email-display"></span>
+            <button id="btn-logout" class="btn-logout">Cerrar Sesión</button>
+        </div>
+    </div>
+
+    <main class="container">
+        <section class="card">
+            <h2>Configuración de conexión (MySQL + AWS)</h2>
+            <p class="description">
+                Parámetros guardados en el navegador para pruebas. En producción vivirán en el backend.
+            </p>
+
+            <form class="config-form">
+                <div class="form-row">
+                    <label for="endpoint-api">Endpoint de la API SIGLET en AWS</label>
+                    <input
+                        type="text"
+                        id="endpoint-api"
+                        placeholder="https://siglet-api.universidad.edu/prestamos"
+                    >
+                </div>
+
+                <div class="form-row">
+                    <label for="nombre-bd">Nombre de la base de datos (MySQL)</label>
+                    <input
+                        type="text"
+                        id="nombre-bd"
+                        placeholder="siglet_bd"
+                    >
+                </div>
+
+                <div class="form-row">
+                    <label for="usuario-bd">Usuario de la base de datos</label>
+                    <input
+                        type="text"
+                        id="usuario-bd"
+                        placeholder="siglet_admin"
+                    >
+                </div>
+
+                <div class="form-row">
+                    <label for="host-bd">Host de la base de datos en AWS</label>
+                    <input
+                        type="text"
+                        id="host-bd"
+                        placeholder="siglet-db.xxxxxx.region.rds.amazonaws.com"
+                    >
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" id="btn-guardar-config">
+                        Guardar configuración (localStorage)
+                    </button>
+                </div>
+            </form>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>SIGLET · Sistema Integral de Gestión de Laboratorios y Equipos Tecnológicos</p>
+    </footer>
+
+    <script src="assets/js/app.js"></script>
+</body>
+</html>

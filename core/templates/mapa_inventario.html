@@ -1,0 +1,90 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Mapa Interactivo - {{ lab.name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .mesa-card {
+            height: 100%;
+            transition: transform 0.2s;
+            cursor: pointer;
+        }
+        .mesa-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .mesa-icon { font-size: 2rem; }
+    </style>
+</head>
+<body class="bg-light">
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>📍 Mapa Digital: {{ lab.name }}</h1>
+        <div>
+            <span class="badge bg-success">Operativo</span>
+            <span class="badge bg-danger">Con Fallas</span>
+            <span class="badge bg-secondary">Vacío</span>
+        </div>
+    </div>
+
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        {% for num_mesa, info in mapa.items %}
+        <div class="col">
+            <div class="card h-100 border-{{ info.color }} mesa-card" data-bs-toggle="modal" data-bs-target="#modalMesa{{ num_mesa }}">
+                <div class="card-header bg-{{ info.color }} text-white text-center">
+                    <h5 class="m-0">MESA {{ num_mesa }}</h5>
+                </div>
+                <div class="card-body text-center">
+                    {% if info.alerta %}
+                        <div class="text-danger mb-2">⚠️ ATENCIÓN REQUERIDA</div>
+                    {% endif %}
+                    <p class="card-text text-muted">
+                        {{ info.equipos|length }} Equipos registrados
+                    </p>
+                    <div class="d-flex justify-content-center gap-2">
+                        {% for eq in info.equipos|slice:":4" %}
+                            <small title="{{ eq.equipment_type.name }}">📦</small>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="modalMesa{{ num_mesa }}" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-{{ info.color }} text-white">
+                        <h5 class="modal-title">Detalle Mesa {{ num_mesa }}</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <ul class="list-group">
+                        {% for eq in info.equipos %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ eq.equipment_type.name }}</strong>
+                                    <br>
+                                    <small class="text-muted">S/N: {{ eq.serial_number }}</small>
+                                </div>
+                                <span class="badge bg-{% if eq.equipment_status.name == 'Disponible' %}success{% else %}danger{% endif %}">
+                                    {{ eq.equipment_status.name }}
+                                </span>
+                            </li>
+                        {% empty %}
+                            <li class="list-group-item text-center text-muted">Mesa Vacía</li>
+                        {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

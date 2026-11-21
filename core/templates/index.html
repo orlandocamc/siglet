@@ -1,0 +1,90 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <title>SIGLET - Ingreso</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    </head>
+   <header class="topbar">
+        <div class="topbar-title">
+            Sistema de préstamos SIGLET
+        </div>
+        <a href="#" class="topbar-subtitle">
+            Universidad Iberoamericana
+        </a>
+    </header>
+
+    <main class="container">
+        <section id="pantalla-login" class="card card-login">
+            <h1>Ingreso al sistema SIGLET</h1>
+            <p class="description">
+                Inicia sesión con tu <strong>usuario institucional</strong>.
+            </p>
+
+            {% if error %}
+                <div style="color: red; text-align: center; margin-bottom: 10px; padding: 10px; background-color: #ffe6e6; border-radius: 5px;">
+                    {{ error }}
+                </div>
+            {% endif %}
+
+            <form id="login-form" class="login-form" method="POST">
+                {% csrf_token %}
+                
+                <div class="form-row">
+                    <label for="login-email">Usuario institucional</label>
+                    <input 
+                        type="text" 
+                        id="login-email" 
+                        name="username" 
+                        placeholder="cuenta, ai+cuenta, aq+nomina…" 
+                        required
+                    >
+                    <small class="hint-text">
+                        Alumnos: cuenta sin dígito · Intercambio: "ai" + cuenta · Profesores: "aq" + nómina.
+                    </small>
+                </div>
+
+                <div class="form-row">
+                    <label for="login-password">Contraseña</label>
+                    <input 
+                        type="password" 
+                        id="login-password" 
+                        name="password" 
+                        placeholder="********" 
+                        required
+                    >
+                    <small class="hint-text">
+                        La utilizada en Laboratorios de Cómputo Académico.
+                    </small>
+                </div>
+
+                <div class="form-row">
+                    <label for="login-captcha">Ingresa el texto de la imagen:</label>
+                    <div class="captcha-row">
+                        <div class="captcha-placeholder" id="captcha-text">X7Z9</div>
+                        <input 
+                            type="text" 
+                            id="login-captcha" 
+                            name="captcha" 
+                            placeholder="Texto de la imagen"
+                        >
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" id="btn-login">
+                        Iniciar Sesión
+                    </button>
+                </div>
+            </form>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>SIGLET · Sistema Integral de Gestión de Laboratorios y Equipos Tecnológicos</p>
+    </footer>
+
+</body>
+</html>

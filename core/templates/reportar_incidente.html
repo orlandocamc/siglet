@@ -1,0 +1,54 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Reportar Incidencia</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body data-page="incidencia">
+    <header class="topbar">
+        <div class="topbar-title">Sistema SIGLET</div>
+    </header>
+
+    <main class="container" style="margin-top: 40px;">
+        <section class="card" style="max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #dc3545;">⚠️ Reportar Falla de Equipo</h2>
+            <p>Estás reportando una falla para: <strong>{{ equipo_nombre }}</strong> ({{ equipo_tag }})</p>
+
+            <form method="POST" class="login-form">
+                {% csrf_token %}
+                
+                <div class="form-row">
+                    <label>Tipo de Falla:</label>
+                    <select name="tipo_id" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                        {% for t in tipos %}
+                            <option value="{{ t.0 }}">{{ t.1 }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <label>Severidad (Qué tan grave es):</label>
+                    <select name="severidad_id" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                        {% for s in severidades %}
+                            <option value="{{ s.0 }}">{{ s.1|upper }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <label>Descripción del problema:</label>
+                    <textarea name="descripcion" required rows="4" placeholder="Describe qué pasó..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-solicitar" style="background-color: #dc3545;">Enviar Reporte</button>
+                    <a href="{% url 'mis_prestamos' %}" style="margin-left: 15px; text-decoration: none; color: #666;">Cancelar</a>
+                </div>
+            </form>
+        </section>
+    </main>
+</body>
+</html>
